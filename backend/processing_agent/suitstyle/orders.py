@@ -3,9 +3,9 @@ Suit Style Store order domain logic. Orders are stored in their own
 collection, referenced by `Contact` rather than embedded in the customer
 document, so adding an order never requires rewriting the whole customer.
 
-order_number is scoped per-customer (per Contact) and comes from a
-persisted counter document keyed by Contact, so deleting an order never
-disrupts numbering for that customer.
+order_number is scoped per-customer (per Contact): it's one past the
+highest order_number that customer currently has (1 if they have none),
+so numbering always reflects what's actually there for that customer.
 """
 
 from datetime import datetime, timezone
@@ -14,8 +14,6 @@ from processing_agent.db_helper import DBHelper
 
 db = DBHelper()
 db.select_collection("suitstyle_orders")
-
-COUNTER_COLLECTION = "suitstyle_order_counter"
 
 
 def _validate_prices(actual_price, sale_price):
@@ -26,15 +24,10 @@ def _validate_prices(actual_price, sale_price):
 
 
 def get_next_order_number_for_contact(contact):
-    counter_db = DBHelper()
-    counter_db.select_collection(COUNTER_COLLECTION)
-    counter_doc = counter_db.retrieve_one_document({"contact": contact})
-    if counter_doc is None:
-        counter_db.save_document({"contact": contact, "value": 1})
+    existing_orders = list(db.retrieve_documents({"Contact": contact}))
+    if not existing_orders:
         return 1
-    next_value = counter_doc["value"] + 1
-    counter_db.update_document({"contact": contact}, {"value": next_value})
-    return next_value
+    return max(order["order_number"] for order in existing_orders) + 1
 
 
 def add_order(order_data):

@@ -13,6 +13,7 @@ export default function OrderDetail() {
   const [order, setOrder] = useState(null);
   const [error, setError] = useState("");
   const [dispatchCalendarOpen, setDispatchCalendarOpen] = useState(false);
+  const [deliveryCalendarOpen, setDeliveryCalendarOpen] = useState(false);
 
   async function loadOrder() {
     try {
@@ -37,19 +38,24 @@ export default function OrderDetail() {
     }
   }
 
-  async function handleDeliver(isoDate) {
+  // Setting a dispatch or delivery date always moves Status together with
+  // it — used both by the StatusSelector (Dispatched/Delivered options)
+  // and by the standalone "Set/Change" links below, so both paths stay
+  // in sync with each other.
+  async function handleSetDispatchDate(isoDate) {
+    setDispatchCalendarOpen(false);
     try {
-      await nksuitsApi.deliverOrder(order.order_number, isoDate);
+      await nksuitsApi.setDispatchDate(order.order_number, isoDate);
       loadOrder();
     } catch (err) {
       setError(err.message);
     }
   }
 
-  async function handleDispatchDateSelect(isoDate) {
-    setDispatchCalendarOpen(false);
+  async function handleSetDeliveryDate(isoDate) {
+    setDeliveryCalendarOpen(false);
     try {
-      await nksuitsApi.setDispatchDate(order.order_number, isoDate);
+      await nksuitsApi.deliverOrder(order.order_number, isoDate);
       loadOrder();
     } catch (err) {
       setError(err.message);
@@ -103,9 +109,11 @@ export default function OrderDetail() {
           </div>
           <StatusSelector
             status={order.Status}
+            dispatchDate={order["Dispatch date"]}
             deliveryDate={order["Delivery date"]}
             onChangeStatus={handleStatusChange}
-            onDeliver={handleDeliver}
+            onSetDispatchDate={handleSetDispatchDate}
+            onSetDeliveryDate={handleSetDeliveryDate}
           />
         </div>
 
@@ -162,7 +170,12 @@ export default function OrderDetail() {
           </div>
           <div style={{ gridColumn: "7 / span 6" }} className="order-detail__field">
             <span className="metadata">Delivery Date</span>
-            <p className="body-text">{order["Delivery date"] || "Not delivered yet"}</p>
+            <p className="body-text">
+              {order["Delivery date"] || "Not set"}{" "}
+              <Button variant="link" onClick={() => setDeliveryCalendarOpen(true)}>
+                {order["Delivery date"] ? "Change" : "Set"}
+              </Button>
+            </p>
           </div>
 
           {order.Remarks && (
@@ -176,8 +189,16 @@ export default function OrderDetail() {
         {dispatchCalendarOpen && (
           <CalendarPopup
             value={order["Dispatch date"]}
-            onSelect={handleDispatchDateSelect}
+            onSelect={handleSetDispatchDate}
             onClose={() => setDispatchCalendarOpen(false)}
+          />
+        )}
+
+        {deliveryCalendarOpen && (
+          <CalendarPopup
+            value={order["Delivery date"]}
+            onSelect={handleSetDeliveryDate}
+            onClose={() => setDeliveryCalendarOpen(false)}
           />
         )}
 

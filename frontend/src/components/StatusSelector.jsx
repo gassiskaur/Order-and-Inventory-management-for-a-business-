@@ -5,29 +5,49 @@ import "./StatusSelector.css";
 const STATUS_OPTIONS = ["Created", "Processing", "Dispatched", "Delivered"];
 
 /**
+ * Status and its paired date are always set together: choosing
+ * "Dispatched" here opens a calendar for Dispatch date, choosing
+ * "Delivered" opens one for Delivery date. Created/Processing have no
+ * paired date and apply immediately.
+ *
  * Props:
  *   status: current Status value
- *   deliveryDate: current Delivery date value (used to pre-select the calendar)
- *   onChangeStatus(newStatus): called for non-Delivered transitions
- *   onDeliver(deliveryDateIso): called once a delivery date is chosen after
- *     selecting "Delivered" — the caller is responsible for saving both
- *     Status and Delivery date together.
+ *   dispatchDate: current Dispatch date value (pre-selects the calendar)
+ *   deliveryDate: current Delivery date value (pre-selects the calendar)
+ *   onChangeStatus(newStatus): called for Created / Processing
+ *   onSetDispatchDate(isoDate): called once a date is chosen after selecting "Dispatched"
+ *   onSetDeliveryDate(isoDate): called once a date is chosen after selecting "Delivered"
  */
-export default function StatusSelector({ status, deliveryDate, onChangeStatus, onDeliver }) {
-  const [calendarOpen, setCalendarOpen] = useState(false);
+export default function StatusSelector({
+  status,
+  dispatchDate,
+  deliveryDate,
+  onChangeStatus,
+  onSetDispatchDate,
+  onSetDeliveryDate,
+}) {
+  const [calendarMode, setCalendarMode] = useState(null); // null | "dispatch" | "delivery"
 
   function handleChange(event) {
     const newStatus = event.target.value;
+    if (newStatus === "Dispatched") {
+      setCalendarMode("dispatch");
+      return;
+    }
     if (newStatus === "Delivered") {
-      setCalendarOpen(true);
+      setCalendarMode("delivery");
       return;
     }
     onChangeStatus(newStatus);
   }
 
   function handleDateSelect(isoDate) {
-    setCalendarOpen(false);
-    onDeliver(isoDate);
+    if (calendarMode === "dispatch") {
+      onSetDispatchDate(isoDate);
+    } else if (calendarMode === "delivery") {
+      onSetDeliveryDate(isoDate);
+    }
+    setCalendarMode(null);
   }
 
   return (
@@ -45,11 +65,11 @@ export default function StatusSelector({ status, deliveryDate, onChangeStatus, o
         ))}
       </select>
 
-      {calendarOpen && (
+      {calendarMode && (
         <CalendarPopup
-          value={deliveryDate}
+          value={calendarMode === "dispatch" ? dispatchDate : deliveryDate}
           onSelect={handleDateSelect}
-          onClose={() => setCalendarOpen(false)}
+          onClose={() => setCalendarMode(null)}
         />
       )}
     </div>

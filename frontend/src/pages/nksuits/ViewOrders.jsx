@@ -38,7 +38,16 @@ export default function ViewOrders() {
     }
   }
 
-  async function handleDeliver(orderNumber, isoDate) {
+  async function handleSetDispatchDate(orderNumber, isoDate) {
+    try {
+      await nksuitsApi.setDispatchDate(orderNumber, isoDate);
+      loadOrders();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleSetDeliveryDate(orderNumber, isoDate) {
     try {
       await nksuitsApi.deliverOrder(orderNumber, isoDate);
       loadOrders();
@@ -95,7 +104,8 @@ export default function ViewOrders() {
                     key={order.order_number}
                     order={order}
                     onStatusChange={handleStatusChange}
-                    onDeliver={handleDeliver}
+                    onSetDispatchDate={handleSetDispatchDate}
+                    onSetDeliveryDate={handleSetDeliveryDate}
                     onDelete={handleDelete}
                   />
                 ))
@@ -110,7 +120,8 @@ export default function ViewOrders() {
                     key={order.order_number}
                     order={order}
                     onStatusChange={handleStatusChange}
-                    onDeliver={handleDeliver}
+                    onSetDispatchDate={handleSetDispatchDate}
+                    onSetDeliveryDate={handleSetDeliveryDate}
                     onDelete={handleDelete}
                   />
                 ))}
@@ -123,7 +134,7 @@ export default function ViewOrders() {
   );
 }
 
-function OrderRow({ order, onStatusChange, onDeliver, onDelete }) {
+function OrderRow({ order, onStatusChange, onSetDispatchDate, onSetDeliveryDate, onDelete }) {
   return (
     <Card className="order-row">
       <div className="order-row__main">
@@ -146,9 +157,11 @@ function OrderRow({ order, onStatusChange, onDeliver, onDelete }) {
       <div className="order-row__actions">
         <StatusSelector
           status={order.Status}
+          dispatchDate={order["Dispatch date"]}
           deliveryDate={order["Delivery date"]}
           onChangeStatus={(status) => onStatusChange(order.order_number, status)}
-          onDeliver={(isoDate) => onDeliver(order.order_number, isoDate)}
+          onSetDispatchDate={(isoDate) => onSetDispatchDate(order.order_number, isoDate)}
+          onSetDeliveryDate={(isoDate) => onSetDeliveryDate(order.order_number, isoDate)}
         />
         <Button variant="link" onClick={() => onDelete(order.order_number)}>
           Delete
