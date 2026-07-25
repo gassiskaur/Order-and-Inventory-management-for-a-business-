@@ -1,0 +1,18 @@
+.card {
+  border-top: 1px solid var(--color-border-strong);
+  padding-top: var(--space-5);
+  padding-bottom: var(--space-5);
+  transition: padding-left var(--duration-medium) var(--ease-editorial),
+    background-color var(--duration-medium) var(--ease-editorial);
+}
+
+.card:hover {
+  background-color: var(--color-muted-background);
+  padding-left: var(--space-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:hover {
+    padding-left: 0;
+  }
+}

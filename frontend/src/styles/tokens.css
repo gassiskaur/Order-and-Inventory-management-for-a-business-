@@ -1,0 +1,291 @@
+/* ===========================================================
+   DESIGN TOKENS — Luxury / Editorial system
+   Centralized here per Part 7 §2. Do not hardcode these
+   values elsewhere; reference the variables.
+   =========================================================== */
+
+:root {
+  /* Palette */
+  --color-background: #F9F8F6;
+  --color-foreground: #1A1A1A;
+  --color-muted-background: #EBE5DE;
+  --color-muted-foreground: #6C6863;
+  --color-accent: #D4AF37;
+  --color-accent-foreground: #FFFFFF;
+  --color-border: rgba(26, 26, 26, 0.16);
+  --color-border-strong: #1A1A1A;
+  --color-grid-line: rgba(26, 26, 26, 0.06);
+  --color-error: #8C3B2E;
+
+  /* Typography */
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* Layout */
+  --content-max-width: 1600px;
+  --control-height: 48px;
+
+  /* Motion */
+  --ease-editorial: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --duration-fast: 300ms;
+  --duration-medium: 500ms;
+  --duration-slow: 700ms;
+  --duration-image: 1800ms;
+}
+
+/* ===========================================================
+   RESET & BASE
+   =========================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.15;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: var(--font-body);
+}
+
+a {
+  color: inherit;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  filter: grayscale(100%);
+  transition: filter var(--duration-image) var(--ease-editorial);
+}
+
+img:hover {
+  filter: grayscale(0%);
+}
+
+/* Respect reduced motion everywhere */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visible focus state — accessible, no glow rings */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ===========================================================
+   LAYOUT PRIMITIVES
+   =========================================================== */
+
+.app-shell {
+  min-height: 100vh;
+  position: relative;
+}
+
+.content-frame {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-7);
+  position: relative;
+}
+
+@media (max-width: 900px) {
+  .content-frame {
+    padding: 0 var(--space-4);
+  }
+}
+
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-5);
+}
+
+@media (max-width: 900px) {
+  .grid-12 {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+}
+
+/* Decorative fixed vertical grid lines — desktop only, non-interactive */
+.editorial-gridlines {
+  position: fixed;
+  inset: 0;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-7);
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-5);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.editorial-gridlines span {
+  border-left: 1px solid var(--color-grid-line);
+  height: 100%;
+}
+
+@media (max-width: 900px) {
+  .editorial-gridlines {
+    display: none;
+  }
+}
+
+.section {
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 900px) {
+  .section {
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-6);
+  }
+}
+
+/* ===========================================================
+   TYPOGRAPHY UTILITIES
+   =========================================================== */
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.page-title em {
+  font-style: italic;
+  font-weight: 400;
+  text-transform: none;
+  color: var(--color-muted-foreground);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 500;
+}
+
+.metadata {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+.body-text {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-foreground);
+}
+
+.muted-text {
+  color: var(--color-muted-foreground);
+}
+
+/* ===========================================================
+   DIVIDERS
+   =========================================================== */
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 0;
+}
+
+.divider-strong {
+  border: none;
+  border-top: 1px solid var(--color-border-strong);
+  margin: 0;
+}
+
+/* ===========================================================
+   VERTICAL LABEL (desktop decorative element)
+   =========================================================== */
+
+.vertical-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+@media (max-width: 900px) {
+  .vertical-label {
+    display: none;
+  }
+}

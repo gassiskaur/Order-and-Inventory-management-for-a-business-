@@ -1,0 +1,96 @@
+.calendar-popup__backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(26, 26, 26, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--space-4);
+}
+
+.calendar-popup {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 0;
+  width: 320px;
+  max-width: 100%;
+  padding: var(--space-5);
+}
+
+.calendar-popup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.calendar-popup__month {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.calendar-popup__nav {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-foreground);
+  transition: background-color var(--duration-fast) var(--ease-editorial),
+    color var(--duration-fast) var(--ease-editorial);
+}
+
+.calendar-popup__nav:hover {
+  background-color: var(--color-foreground);
+  color: #FFFFFF;
+}
+
+.calendar-popup__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: var(--space-2);
+}
+
+.calendar-popup__weekdays span {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
+}
+
+.calendar-popup__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-popup__day {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 0;
+  height: 36px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-foreground);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-editorial),
+    border-color var(--duration-fast) var(--ease-editorial),
+    color var(--duration-fast) var(--ease-editorial);
+}
+
+.calendar-popup__day:hover {
+  border-color: var(--color-accent);
+}
+
+.calendar-popup__day--selected {
+  background-color: var(--color-accent);
+  color: var(--color-accent-foreground);
+}

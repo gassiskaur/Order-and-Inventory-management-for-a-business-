@@ -1,0 +1,29 @@
+.inventory-page__forms {
+  row-gap: var(--space-6);
+}
+
+.inventory-page__inline-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.inventory-page__inline-form .field {
+  flex: 1;
+  min-width: 160px;
+}
+
+.stock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .inventory-page__forms > div {
+    grid-column: 1 / -1 !important;
+  }
+}

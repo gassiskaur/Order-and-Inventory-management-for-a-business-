@@ -1,0 +1,31 @@
+.customer-detail {
+  max-width: 1100px;
+}
+
+.customer-order-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.customer-order-row__prices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+}
+
+.customer-detail__order-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-5);
+  max-width: 640px;
+  flex-wrap: wrap;
+}
+
+.customer-detail__order-form .field {
+  flex: 1;
+  min-width: 160px;
+}
