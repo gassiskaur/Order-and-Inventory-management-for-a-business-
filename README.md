@@ -1,118 +1,152 @@
-# NK Suits Botique + Suit Style Store
+# NK Suits Botique + Suit Style Store — Project Outline
 
-A shared-backend, two-brand boutique management app.
+A shared-backend, two-brand boutique management app: order intake and
+dispatch tracking for NK Suits Botique, and customer/order/inventory
+management for Suit Style Store. One login, one database, two storefronts.
 
-- **Backend:** FastAPI + MongoDB (PyMongo)
-- **Frontend:** React (Vite) — Luxury/Editorial design system
 
-Both businesses share one MongoDB database (`boutique_app`) with separate
-collections. There is a single brand-owner login shared by both brands.
+## 1. Tech Stack
 
----
+| Layer | Choice | Why |
+|---|---|---|
+| Frontend | React 18 + Vite | Fast dev server, simple build, no framework overhead for a CRUD-heavy admin tool |
+| Routing | React Router v6 | Client-side routing between brand sections |
+| Styling | Plain CSS + design tokens (no Tailwind/UI kit) | Full control over the custom Luxury/Editorial visual system |
+| Backend | FastAPI (Python) | Async-friendly, auto-generated API docs, clean typing via Pydantic |
+| Database | MongoDB (Atlas) | Schema-flexible documents fit two structurally different businesses in one DB without rigid joins |
+| Auth | Single-account JWT (bcrypt-hashed password) | No multi-user complexity needed — one brand owner logs into both storefronts |
+| Frontend hosting | Vercel | Free tier, auto-deploys on push, ideal for a static Vite build |
+| Backend hosting | Render | Persistent Python process (FastAPI/Uvicorn needs a long-lived server, unlike Vercel's serverless model) |
+| Version control | Git + GitHub | Source of truth; both Vercel and Render auto-deploy from pushes |
 
-## 1. Backend setup
 
-```bash
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+## 2. Architecture
 
-cp .env.example .env
-# then edit .env and fill in:
-#   MONGODB_URI   — your MongoDB connection string (Atlas or local)
-#   JWT_SECRET    — any long random string
+```
+                 ┌───────────────┐
+                 │   MongoDB      │
+                 │   (Atlas)      │
+                 └───────▲────────┘
+                         │
+                 ┌───────┴────────┐
+                 │  FastAPI        │   <- Render
+                 │  backend        │
+                 │                 │
+                 │  routes/        │  (HTTP layer only)
+                 │  processing_    │  (business logic:
+                 │   agent/         │   validation, sorting,
+                 │                 │   calculations)
+                 └───────▲────────┘
+                         │  REST API (JSON, JWT auth)
+                 ┌───────┴────────┐
+                 │  React frontend │   <- Vercel
+                 │                 │
+                 │  pages/nksuits  │
+                 │  pages/suitstyle│
+                 │  components/    │  (shared UI: Button,
+                 │                 │   Input, Card,
+                 │                 │   CalendarPopup, etc.)
+                 └───────▲────────┘
+                         │
+                    Browser / Phone
 ```
 
-### Create the brand-owner login
+**Guiding rule the whole codebase follows:** the frontend never touches
+the database directly, and the backend's `routes/` layer never contains
+business logic — it just translates HTTP requests into calls against
+`processing_agent/`, which is plain Python with no knowledge it's
+running behind an API. This means the UI can be redesigned without
+touching backend code, and business rules can change without touching
+routes.
 
-There is no signup route on purpose — run this once to create (or reset)
-the single account used to log in:
 
-```bash
-python create_admin.py
+
+## 3. Data Model (MongoDB collections)
+
+| Collection | Purpose |
+|---|---|
+| `nksuits_orders` | Every NK Suits order — name, contact, prices, status, dispatch/delivery dates, status history |
+| `suitstyle_customers` | Suit Style customer records, keyed by unique `Contact` |
+| `suitstyle_orders` | Orders referencing a customer by `Contact` (not embedded — keeps customer updates cheap) |
+| `suitstyle_vendors` | Vendor names for stock sourcing |
+| `suitstyle_stock` | Stock cost entries logged per vendor |
+| `auth` | Single document: the one brand-owner login (bcrypt hash) |
+
+
+## 4. Core Workflows
+
+### NK Suits — order lifecycle
+```
+Create Order → Created → Processing → Dispatched → Delivered
+                                ↑            ↑           ↑
+                          (manual)     (date picker   (date picker
+                                        auto-sets       auto-sets
+                                        status)         status)
+```
+- Order numbers are computed from the highest existing number + 1 (never a
+  stale persisted counter) — deleting every order resets numbering to 1,
+  deleting a middle order never causes a collision.
+- Discount % is always calculated server-side from Actual price vs. sale
+  price — never trusted from the client.
+- Dispatch/Delivery dates can only be set via the calendar popup, and
+  setting either one always updates Status together with it, from either
+  the order list, the order detail page, or the status dropdown itself.
+- The order list is two-tier sorted: active orders first (newest
+  created), delivered orders after (most recently delivered first).
+
+### Suit Style — customer + order + inventory
+```
+Add Customer → view/search customer list → open a customer
+  → add orders against them (auto-numbered per customer)
+  → separately: log vendors and stock cost entries
+  → dashboard rolls all of it up into weekly/monthly/yearly stats
 ```
 
-It will prompt for a username and password and store a bcrypt hash in the
-`auth` collection.
-
-### Run the API
-
-```bash
-uvicorn main:app --reload --port 8000
+### Auth
+```
+create_admin.py (run once, locally) → writes bcrypt hash to `auth`
+      ↓
+Login screen → POST /api/auth/login → JWT issued
+      ↓
+JWT stored client-side → sent as Bearer token on every API call
+      ↓
+FastAPI dependency (require_auth) rejects any request without a valid token
 ```
 
-The API is now at `http://localhost:8000`. Interactive docs (Swagger UI)
-are auto-generated by FastAPI at `http://localhost:8000/docs`.
+## 5. Deployment Pipeline
 
----
-
-## 2. Frontend setup
-
-```bash
-cd frontend
-npm install
-
-cp .env.example .env
-# VITE_API_BASE_URL defaults to http://localhost:8000, change if needed
+```
+git push → GitHub
+             │
+      ┌──────┴───────┐
+      ▼               ▼
+   Vercel          Render
+   (frontend)      (backend)
+   auto-builds     auto-builds
+   & deploys       & deploys
+      │               │
+      └──────┬────────┘
+             ▼
+     Live app, reachable
+     from any browser —
+     desktop or phone
 ```
 
-### Run the dev server
+- Frontend build reads `VITE_API_BASE_URL` at build time to know where
+  the API lives.
+- Backend's `CORS_ORIGINS` env var whitelists exactly which frontend
+  URL(s) are allowed to call it.
+- Both platforms redeploy automatically on every push to the connected
+  branch — no manual deploy step in normal day-to-day use.
 
-```bash
-npm run dev
-```
+## 6. Design System (frontend)
 
-Open `http://localhost:5173`, log in with the username/password you
-created above, then choose NK Suits Botique or Suit Style Store.
+"Luxury / Editorial" visual language, fully custom (no component
+library): warm alabaster/charcoal/gold palette, Playfair Display +
+Inter typography, 0px border radii, underline-only inputs, slow
+gold-slide button hover, thin architectural grid lines, and a fully
+responsive layout that collapses to a single column on phone widths.
+All tokens (colors, spacing, motion) are centralized in one CSS file
+so the whole visual identity can be adjusted from a single place.
 
-### Build for production
 
-```bash
-npm run build
-```
-
-Outputs static files to `frontend/dist/` — serve these from any static
-host, and point `VITE_API_BASE_URL` at wherever the FastAPI backend is
-deployed.
-
----
-
-## 3. Project layout
-
-See `PART 3 — Folder Structure` in the original build prompt — the
-delivered code matches it exactly. In short:
-
-- `backend/processing_agent/` — all business logic (pure Python, no HTTP)
-- `backend/routes/` — the only place that knows about HTTP; thin wrappers
-  around `processing_agent`
-- `frontend/src/pages/` — one folder per brand (`nksuits/`, `suitstyle/`)
-- `frontend/src/components/` — shared, reusable UI (`Button`, `Input`,
-  `Card`, `CalendarPopup`, `StatusSelector`, `Metric`, `Layout`)
-- `frontend/src/styles/tokens.css` — the design system's single source of
-  truth for color, type, spacing, and motion
-
-**If you extend the UI, you should only ever need to touch `frontend/`.**
-All database access, validation, and calculations live in
-`backend/processing_agent/`.
-
----
-
-## 4. Notes on behavior
-
-- **Order numbers** come from persisted counters (`nksuits_order_counter`,
-  `suitstyle_order_counter`), never from `count()` — deleting an order
-  never disrupts numbering for existing or future orders.
-- **Discount given** is always calculated server-side:
-  `((Actual price - sale price) / Actual price) * 100`. Order creation is
-  rejected with a clear message if `Actual price <= 0` or
-  `Actual price < sale price`.
-- **Dispatch date / Delivery date** can only be set through the
-  `CalendarPopup` component — there is no free-text date entry anywhere
-  in the UI.
-- **NKSUITS order list sorting:** non-Delivered orders first (by
-  `Date created` descending), then Delivered orders (by `Delivery date`
-  descending).
-- Suit Style's `suitstyle_orders` collection references customers by
-  `Contact` rather than embedding orders in the customer document, so a
-  customer record can be updated without rewriting their order history.
