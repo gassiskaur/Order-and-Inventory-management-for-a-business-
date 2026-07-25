@@ -19,6 +19,7 @@ def add_vendor(vendor_name):
         raise ValueError("A vendor with this name already exists")
     vendor = {"vendor_name": vendor_name}
     vendors_db.save_document(vendor)
+    vendor["_id"] = str(vendor["_id"])
     return vendor
 
 
@@ -40,6 +41,7 @@ def add_stock(vendor_name, cost_of_stock):
         "Date created": datetime.now(timezone.utc).isoformat(),
     }
     stock_db.save_document(stock_entry)
+    stock_entry["_id"] = str(stock_entry["_id"])
     return stock_entry
 
 

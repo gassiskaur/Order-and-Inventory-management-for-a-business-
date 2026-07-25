@@ -49,6 +49,7 @@ def add_order(order_data):
     order_data["Date created"] = datetime.now(timezone.utc).isoformat()
 
     db.save_document(order_data)
+    order_data["_id"] = str(order_data["_id"])
     return order_data
 
 

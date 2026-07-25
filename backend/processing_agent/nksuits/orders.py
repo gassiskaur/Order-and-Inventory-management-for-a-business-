@@ -54,6 +54,7 @@ def create_order(order_data):
     order_data["status_history"] = [{"status": "Created", "changed_on": now_iso}]
 
     db.save_document(order_data)
+    order_data["_id"] = str(order_data["_id"])
     return order_data
 
 

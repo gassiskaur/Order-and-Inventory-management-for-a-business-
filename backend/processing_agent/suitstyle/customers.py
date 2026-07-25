@@ -24,6 +24,7 @@ def create_customer(customer_data):
 
     customer_data["Date created"] = datetime.now(timezone.utc).isoformat()
     db.save_document(customer_data)
+    customer_data["_id"] = str(customer_data["_id"])
     return customer_data
 
 
